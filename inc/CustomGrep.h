@@ -53,7 +53,7 @@ private:
 
     // Number of worker threads to use. Determined in the constructor using
     // std::thread::hardware_concurrency() with a minimum of one.
-    uint8_t m_threadCount = 1u;
+    size_t m_threadCount = 1u;
     bool m_ignoreCase = false; // perform case-insensitive search if true
     bool m_regexSearch = false; // use regex search if true
 };
