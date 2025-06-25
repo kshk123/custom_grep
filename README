@@ -63,8 +63,3 @@ ctest --output-on-failure
 
 
 
-###Additional notes:
-The testing is basic, might not have covered all edge cases, but it does check the main functionality.
-Also, I have taken help from GitHub Copilot (Gemini 2.5 Pro and o4-mini) for some design discussions and preparing the boiler plate code for the tests.
-
-
