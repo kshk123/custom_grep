@@ -88,7 +88,7 @@ std::vector<Match> CustomGrep::parallelSearch(
         }
         size_t end_idx = std::min(start_idx + chunk_size, total_files);
 
-        threads.emplace_back([&, thread_index, start_idx, end_idx]()
+        threads.emplace_back([&, thread_index, start_idx, end_idx]
         {
             auto& out = local_results[thread_index];
 
@@ -174,8 +174,7 @@ void CustomGrep::regexSearch(const std::string& query,
         std::regex_constants::ECMAScript;
     if (m_ignoreCase)
     {
-        flags = static_cast<std::regex_constants::syntax_option_type>(
-            flags | std::regex_constants::icase);
+        flags = flags | std::regex_constants::icase;
     }
 
     std::regex re(query, flags);
