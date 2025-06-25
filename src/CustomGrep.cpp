@@ -27,7 +27,7 @@ CustomGrep::CustomGrep(bool ignoreCase, bool regexSearch)
     // may return 0 if the value is not well defined on a system. In that
     // case fall back to 1 thread.
     auto hc = std::thread::hardware_concurrency();
-    m_threadCount = (hc == 0) ? 1u : static_cast<uint8_t>(hc);
+    m_threadCount = (hc == 0) ? 1u : static_cast<size_t>(hc);
 }
 
 // This function goes through a directory recursively and collects all regular files.
@@ -80,13 +80,13 @@ std::vector<Match> CustomGrep::parallelSearch(
     std::vector<std::thread> threads;
     threads.reserve(m_threadCount);
 
-    for (uint8_t thread_index = 0; thread_index < m_threadCount; ++thread_index)
+    for (size_t thread_index = 0; thread_index < m_threadCount; ++thread_index)
     {
-        size_t start_idx = static_cast<size_t>(thread_index) * chunk_size;
+        size_t start_idx = thread_index * chunk_size;
         if (start_idx >= total_files)
         {
             // More threads than files: this (and subsequent) thread has no work
-            std::cout << "Thread " << static_cast<int>(thread_index)
+            std::cout << "Thread " << thread_index
                       << " has no files to process." << std::endl;
             break;
         }
