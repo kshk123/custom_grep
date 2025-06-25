@@ -20,10 +20,14 @@ static void lowercaseInPlace(std::string& s)
 }
 
 CustomGrep::CustomGrep(bool ignoreCase, bool regexSearch)
-    : m_threadCount(static_cast<uint8_t>(std::thread::hardware_concurrency()))
-    , m_ignoreCase(ignoreCase)
+    : m_ignoreCase(ignoreCase)
     , m_regexSearch(regexSearch)
 {
+    // Determine how many threads to use. std::thread::hardware_concurrency()
+    // may return 0 if the value is not well defined on a system. In that
+    // case fall back to 1 thread.
+    auto hc = std::thread::hardware_concurrency();
+    m_threadCount = (hc == 0) ? 1u : static_cast<uint8_t>(hc);
 }
 
 // This function goes through a directory recursively and collects all regular files.
@@ -183,6 +187,10 @@ void CustomGrep::regexSearch(const std::string& query,
     size_t      lineNumber = 0;
     while (std::getline(ifs, line))
     {
+        if (!line.empty() && line.back() == '\r') // to handle Windows-style line endings
+        {
+            line.pop_back();
+        }
         ++lineNumber;
         if (std::regex_search(line, re))
         {
@@ -197,16 +205,26 @@ void CustomGrep::regularSearch(const std::string& query,
                                std::vector<Match> &results) const
 {
     std::string line;
-    size_t lineNumber = 0;
+    size_t      lineNumber = 0;
+
+    // For case-insensitive search, convert the query string to lowercase
+    std::string lowerQuery;
+    if (m_ignoreCase)
+    {
+        lowerQuery = query;
+        lowercaseInPlace(lowerQuery);
+    }
+
     while (std::getline(ifs, line))
     {
+        if (!line.empty() && line.back() == '\r') // to handle Windows-style line endings
+        {
+            line.pop_back();
+        }
         ++lineNumber;
         if (m_ignoreCase)
         {
-            // For case-insensitive search, lowercase both query and line
-            std::string lowerQuery = query;
-            lowercaseInPlace(lowerQuery);
-
+            // For case-insensitive search, convert the line to lowercase
             std::string lowerLine = line;
             lowercaseInPlace(lowerLine);
             if (lowerLine.find(lowerQuery) != std::string::npos)
