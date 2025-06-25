@@ -1,0 +1,16 @@
+# CMake build files
+build/
+cmake-build-*/
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+compile_commands.json
+
+# Executables and object files
+*.o
+*.a
+*.so
+grep_exec
+
+# CLion specific files
+.idea/

@@ -1,0 +1,70 @@
+# CustomGrep
+
+A C++ utility that recursively searches all files under a directory for a given query.
+Supports optional case-insensitive or regex matching and parallelizes.
+
+---
+
+### Design
+
+The utility first collects all regular files under the target directory, then searches each file for the query string
+using either substring or regex matching. The search can be case-sensitive or case-insensitive, and the entire process
+is parallelized to improve performance.The number of worker threads is determined by the number of hardware threads
+available on the system.
+
+- **File Collection (serial):**
+  Uses `std::filesystem::recursive_directory_iterator` to gather a `std::vector<path>` of all regular files under the
+  target directory.
+
+- **Per-File Search (serial per file):**
+  - **Substring mode:**
+    - Case-sensitive: `line.find(query)`
+    - Case-insensitive: lowercase both `query` and each `line` with `std::transform` + `std::tolower`
+  - **Regex mode:**
+    - Compile `std::regex(query, ECMAScript | (ignoreCase ? icase : 0))`
+    - Call `std::regex_search(line, re)` on each line
+  - Strip any trailing `'\r'` after `std::getline` to handle CRLF files.
+
+- **Parallel Search (manual threads):**
+  - Attempted to use `std::for_each` with `std::execution::par`, but Apple Clang on macOS does not yet support `std::execution::par`.
+  - Instead, split the collected file list into N contiguous chunks—where N = `std::thread::hardware_concurrency()` (or 1 if zero).
+  - Spawn N threads; each thread runs the above per-file search on its slice, accumulating matches in a thread-local `vector<Match>`.
+  - After joining, merge all per-thread results into one vector.
+  - Since all threads use their own `vector<Match>`, no mutexes are needed, avoiding contention.
+
+
+
+### Build & Test n a bash shell (Linux, macOS)
+## For building the project, you need CMake 3.16 or later and a C++17 compatible compiler.
+## To just build the project:
+mkdir build && cd build
+cmake ..
+cmake --build .
+
+## To enable and run tests (GoogleTest pulled via FetchContent):
+mkdir build && cd build
+cmake -DBUILD_TESTS=ON ..
+cmake --build .
+ctest --output-on-failure
+
+### Usage example
+
+# Case-sensitive substring (default)
+./grep_exec "foo" /path/to/dir
+
+# Case-insensitive substring
+./grep_exec "foo" /path/to/dir --ignore-case
+
+# Regex (case-sensitive)
+./grep_exec '^foo[0-9]+' /path/to/dir --regex
+
+# Regex (case-insensitive)
+./grep_exec '^foo[0-9]+' /path/to/dir --ignore-case --regex
+
+
+
+###Additional notes:
+The testing is basic, might not have covered all edge cases, but it does check the main functionality.
+Also, I have taken help from GitHub Copilot (Gemini 2.5 Pro and o4-mini) for some design discussions and preparing the boiler plate code for the tests.
+
+
