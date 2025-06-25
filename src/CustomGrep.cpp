@@ -38,7 +38,7 @@ std::vector<std::filesystem::path> CustomGrep::collectFiles(const std::filesyste
     std::vector<std::filesystem::path> files;
     if (!std::filesystem::exists(dir) || !std::filesystem::is_directory(dir))
     {
-        std::cout << "Input path: [" << dir  << "] does not exist or is not a directory" << std::endl;
+        std::cerr << "Input path: [" << dir  << "] does not exist or is not a directory" << std::endl;
         return files; // Return empty if the directory does not exist or is not a directory
     }
 
@@ -66,7 +66,7 @@ std::vector<Match> CustomGrep::parallelSearch(
     size_t total_files = all_files.size();
     if (total_files == 0 || m_threadCount == 0)
     {
-        std::cout << "No files to search or no threads available." << std::endl;
+        std::cerr << "No files to search or no threads available." << std::endl;
         return {}; // nothing to scan
     }
 
@@ -152,7 +152,7 @@ std::vector<Match> CustomGrep::searchInFile(const std::filesystem::path& filePat
     if (!ifs.is_open())
     {
         // Couldn’t open (permissions, etc.); return empty
-        std::cout << "Could not open file: [" << filePath << "] for searching."  << std::endl;
+        std::cerr << "Could not open file: [" << filePath << "] for searching."  << std::endl;
         return results;
     }
     if (m_regexSearch)
