@@ -21,6 +21,18 @@ static void writeFile(const fs::path& path, const std::vector<std::string>& line
     ASSERT_TRUE(fs::exists(path));
 }
 
+// Helper: write a file using CRLF (Windows) line endings
+static void writeFileCRLF(const fs::path& path, const std::vector<std::string>& lines)
+{
+    std::ofstream ofs(path, std::ios::binary);
+    for (auto const& l : lines)
+    {
+        ofs << l << "\r\n";
+    }
+    ofs.close();
+    ASSERT_TRUE(fs::exists(path));
+}
+
 // Helper: recursively delete a directory if it exists
 static void removeDirIfExists(const fs::path& dir)
 {
@@ -524,6 +536,25 @@ TEST(NoMatches, SingleFile)
 
     auto results = grep_ci.parallelSearch(files, "absent");
     EXPECT_TRUE(results.empty());
+
+    removeDirIfExists(base);
+}
+
+TEST(HandlesCarriageReturn, StripsCR)
+{
+    auto base = fs::temp_directory_path() / "custom_grep_test_crlf";
+    removeDirIfExists(base);
+    fs::create_directories(base);
+
+    std::vector<std::string> lines = { "needle", "other" };
+    auto filePath = base / "crlf.txt";
+    writeFileCRLF(filePath, lines);
+
+    cgrep::CustomGrep grep(false, false);
+    auto matches = grep.searchInFile(filePath, "needle");
+    ASSERT_EQ(matches.size(), 1u);
+    EXPECT_EQ(matches[0].line_number, 1u);
+    EXPECT_EQ(matches[0].line, "needle");
 
     removeDirIfExists(base);
 }

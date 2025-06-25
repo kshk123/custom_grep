@@ -39,7 +39,8 @@ Supports optional case-insensitive or regex matching, and parallelizes work acro
    - Handle CRLF: strip trailing `'\r'` after each `std::getline`
 
 3. **Parallel Search**
-   - Determine **N** = `std::thread::hardware_concurrency()` (fallback to 1)
+   - Determine **N** = `std::thread::hardware_concurrency()`. If this returns
+     `0`, use **N = 1** thread instead.
    - Split file list into **N** contiguous chunks
    - Spawn **N** threads, each:
      1. Runs per-file search on its slice
@@ -76,7 +77,7 @@ ctest --output-on-failure
 ## Usage
 
 ```text
-Usage: ./grep_exec [OPTIONS] <query> <directory>
+Usage: ./grep_exec <query> <directory> [OPTIONS]
 
 Options:
   --ignore-case    Perform case-insensitive matching

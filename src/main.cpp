@@ -16,27 +16,22 @@ int main(int argc, char* argv[])
     bool                  ignoreCase  = false;
     bool                  useRegex    = false;
 
-    int argIndex = 3;
-
-    // Check for "--ignore-case"
-    if (argIndex < argc && std::string(argv[argIndex]) == "--ignore-case")
+    for (int i = 3; i < argc; ++i)
     {
-        ignoreCase = true;
-        ++argIndex;
-    }
-
-    // Check for "--regex"
-    if (argIndex < argc && std::string(argv[argIndex]) == "--regex")
-    {
-        useRegex = true;
-        ++argIndex;
-    }
-
-    // Any remaining args are invalid
-    if (argIndex < argc)
-    {
-        std::cerr << "Unexpected extra argument: " << argv[argIndex] << "\n";
-        return 1;
+        std::string arg = argv[i];
+        if (arg == "--ignore-case")
+        {
+            ignoreCase = true;
+        }
+        else if (arg == "--regex")
+        {
+            useRegex = true;
+        }
+        else
+        {
+            std::cerr << "Unrecognized option: " << arg << "\n";
+            return 1;
+        }
     }
 
     try
