@@ -19,7 +19,7 @@ struct Match
 class CustomGrep
 {
 public:
-    explicit CustomGrep(bool m_ignoreCase = false, bool m_regexSearch = false);
+    explicit CustomGrep(bool ignoreCase = false, bool regexSearch = false);
     ~CustomGrep() = default;
     CustomGrep(const CustomGrep&) = default;
     CustomGrep& operator=(const CustomGrep&) = default;
@@ -32,12 +32,12 @@ public:
 
     /// Perform the parallel search using the number of threads set in the constructor.
     /// Each thread processes a contiguous subrange of `all_files` and calls `searchInFile`.
-    std::vector<Match> parallelSearch(const std::vector<std::filesystem::path>& all_files,
+    [[nodiscard]] std::vector<Match> parallelSearch(const std::vector<std::filesystem::path>& all_files,
                                       const std::string& query) const;
 
     /// Scan the entire file at `filePath` line by line, looking for `query`.
     /// Returns a vector of Match for every line that contains `query`.
-    std::vector<Match> searchInFile(const std::filesystem::path& filePath,
+    [[nodiscard]] std::vector<Match> searchInFile(const std::filesystem::path& filePath,
                                             const std::string& query) const;
 
 private:
