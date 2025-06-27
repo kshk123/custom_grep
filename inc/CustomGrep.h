@@ -26,10 +26,6 @@ public:
     CustomGrep(CustomGrep&&) noexcept = default;
     CustomGrep& operator=(CustomGrep&&) noexcept = default;
 
-    /// Recursively walk `dir` and return a list of all regular files.
-    /// Throws std::filesystem::filesystem_error on failure.
-    static std::vector<std::filesystem::path> collectFiles(const std::filesystem::path& dir);
-
     /// Perform the parallel search using the number of threads set in the constructor.
     /// Each thread processes a contiguous subrange of `all_files` and calls `searchInFile`.
     [[nodiscard]] std::vector<Match> parallelSearch(const std::vector<std::filesystem::path>& all_files,
@@ -41,8 +37,6 @@ public:
                                             const std::string& query) const;
 
 private:
-    static void collectFilesRecursive(const std::filesystem::path& dir,
-                               std::vector<std::filesystem::path>& files);
 
     void regexSearch(const std::string& query,
                      const std::filesystem::path& filePath,

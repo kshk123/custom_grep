@@ -1,4 +1,5 @@
 #include "CustomGrep.h"
+#include "FileCollector.h"
 
 #include <iostream>
 #include <string>
@@ -36,7 +37,7 @@ int main(int argc, char* argv[])
 
     try
     {
-        auto all_files = cgrep::CustomGrep::collectFiles(dirPath);
+        auto all_files = cgrep::FileCollector::collectFiles(dirPath);
         cgrep::CustomGrep custom_grep(ignoreCase, useRegex);
         auto results = custom_grep.parallelSearch(all_files, query);
 
