@@ -11,6 +11,7 @@ include_directories(${CMAKE_SOURCE_DIR}/inc)
 
 add_library(CustomGrep
         src/CustomGrep.cpp
+        src/FileCollector.cpp
 )
 target_link_libraries(CustomGrep PRIVATE Threads::Threads)
 

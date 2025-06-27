@@ -1,4 +1,5 @@
 #include "CustomGrep.h"
+#include "FileCollector.h"
 
 #include <gtest/gtest.h>
 #include <filesystem>
@@ -57,7 +58,7 @@ TEST(CollectFiles, NestedDirectories)
     writeFile(base / "subdir1" / "inside2.txt", { "another" });
     writeFile(base / "subdir2" / "nested" / "deep.txt", { "deep" });
 
-    auto files = cgrep::CustomGrep::collectFiles(base);
+    auto files = cgrep::FileCollector::collectFiles(base);
     EXPECT_EQ(files.size(), 5u);
 
     std::set<fs::path> found(files.begin(), files.end());
@@ -282,7 +283,7 @@ TEST(ParallelSearch, MultipleFiles_CaseSensitive)
         "no fruit"
     });
 
-    auto all_files = cgrep::CustomGrep::collectFiles(base);
+    auto all_files = cgrep::FileCollector::collectFiles(base);
     EXPECT_EQ(all_files.size(), 3u);
 
     cgrep::CustomGrep grep_cs(false, false);
@@ -343,7 +344,7 @@ TEST(ParallelSearch, MultipleFiles_CaseInsensitive)
         "no fruit"
     });
 
-    auto all_files = cgrep::CustomGrep::collectFiles(base);
+    auto all_files = cgrep::FileCollector::collectFiles(base);
     EXPECT_EQ(all_files.size(), 3u);
 
     cgrep::CustomGrep grep_ci(true, false);
@@ -400,7 +401,7 @@ TEST(ParallelSearch, Regex_CaseSensitive)
         "last"
     });
 
-    auto all_files = cgrep::CustomGrep::collectFiles(base);
+    auto all_files = cgrep::FileCollector::collectFiles(base);
     EXPECT_EQ(all_files.size(), 3u);
 
     // Case-sensitive regex: matches lines starting exactly "def"
@@ -461,7 +462,7 @@ TEST(ParallelSearch, Regex_CaseInsensitive)
         "last"
     });
 
-    auto all_files = cgrep::CustomGrep::collectFiles(base);
+    auto all_files = cgrep::FileCollector::collectFiles(base);
     EXPECT_EQ(all_files.size(), 3u);
 
     // Case-insensitive regex: matches "^def"
@@ -504,7 +505,7 @@ TEST(EmptyDirectory, NoFiles)
     removeDirIfExists(base);
     fs::create_directories(base);
 
-    auto files = cgrep::CustomGrep::collectFiles(base);
+    auto files = cgrep::FileCollector::collectFiles(base);
     EXPECT_TRUE(files.empty());
 
     cgrep::CustomGrep grep_ci(true, true);
@@ -531,7 +532,7 @@ TEST(NoMatches, SingleFile)
     auto matches = grep_ci.searchInFile(base / "onlyfile.txt", "absent");
     EXPECT_TRUE(matches.empty());
 
-    auto files = cgrep::CustomGrep::collectFiles(base);
+    auto files = cgrep::FileCollector::collectFiles(base);
     EXPECT_EQ(files.size(), 1u);
 
     auto results = grep_ci.parallelSearch(files, "absent");
@@ -572,7 +573,7 @@ TEST(CollectFiles, SkipsPermissionDenied)
     fs::permissions(base / "denied", fs::perms::none, fs::perm_options::replace);
 
     testing::internal::CaptureStderr();
-    auto files = cgrep::CustomGrep::collectFiles(base);
+    auto files = cgrep::FileCollector::collectFiles(base);
     std::string output = testing::internal::GetCapturedStderr();
 
     EXPECT_EQ(files.size(), 1u);
@@ -599,7 +600,7 @@ TEST(CollectFiles, ContinuesAfterPermissionDenied)
     fs::permissions(base / "denied", fs::perms::none, fs::perm_options::replace);
 
     testing::internal::CaptureStderr();
-    auto files = cgrep::CustomGrep::collectFiles(base);
+    auto files = cgrep::FileCollector::collectFiles(base);
     std::string output = testing::internal::GetCapturedStderr();
 
     std::set<fs::path> expected = { base / "pre" / "a.txt", base / "post" / "b.txt" };
