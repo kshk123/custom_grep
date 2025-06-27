@@ -32,7 +32,10 @@ if(BUILD_TESTS)
     set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
     FetchContent_MakeAvailable(googletest)
 
-    add_executable(test_custom_grep tests/TestCustomGrep.cpp)
+    add_executable(test_custom_grep
+        tests/TestCustomGrep.cpp
+        tests/TestFileCollector.cpp
+    )
     target_link_libraries(test_custom_grep PRIVATE CustomGrep GTest::gtest_main)
     target_include_directories(test_custom_grep PRIVATE ${CMAKE_SOURCE_DIR}/inc)
 
