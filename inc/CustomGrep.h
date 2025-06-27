@@ -41,6 +41,9 @@ public:
                                             const std::string& query) const;
 
 private:
+    static void collectFilesRecursive(const std::filesystem::path& dir,
+                               std::vector<std::filesystem::path>& files);
+
     void regexSearch(const std::string& query,
                      const std::filesystem::path& filePath,
                      std::ifstream& ifs,
