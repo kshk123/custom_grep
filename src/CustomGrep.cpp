@@ -30,24 +30,83 @@ CustomGrep::CustomGrep(bool ignoreCase, bool regexSearch)
     m_threadCount = (hc == 0) ? 1u : static_cast<size_t>(hc);
 }
 
-// This function goes through a directory recursively and collects all regular files.
-// The input is a directory path, and it returns a vector of paths to the files found in that directory
-// (and its subdirectories).
-std::vector<std::filesystem::path> CustomGrep::collectFiles(const std::filesystem::path& dir)
+// private recursive helper function
+void CustomGrep::collectFilesRecursive(const std::filesystem::path& dir, std::vector<std::filesystem::path>& files)
 {
-    std::vector<std::filesystem::path> files;
-    if (!std::filesystem::exists(dir) || !std::filesystem::is_directory(dir))
+    std::error_code ec;
+    // This is where we attempt to access the directory. If we lack permission, `ec` will be set.
+    std::filesystem::directory_iterator it(dir, ec);
+
+    if (ec)
     {
-        std::cerr << "Input path: [" << dir  << "] does not exist or is not a directory" << std::endl;
-        return files; // Return empty if the directory does not exist or is not a directory
+        // Log the permission error and return. This stops recursion down this path
+        // but allows the caller to continue with other directories.
+        std::cerr << "Permission denied, cannot access directory: " << dir.string() << std::endl;
+        return;
     }
 
-    for (auto const& entry : std::filesystem::recursive_directory_iterator(dir))
+    for (const auto& entry : it)
     {
-        if (entry.is_regular_file())
+        std::error_code entry_ec;
+        if (entry.is_directory(entry_ec))
+        {
+            // It's a directory, so we recurse.
+            collectFilesRecursive(entry.path(), files);
+        }
+        else if (entry.is_regular_file(entry_ec))
         {
             files.push_back(entry.path());
         }
+
+        if (entry_ec)
+        {
+            // An error occurred checking the entry type.
+            // Log it and continue with the next entry in the current directory.
+            std::cerr << "Error accessing entry: " << entry.path().string() << ": " << entry_ec.message() << std::endl;
+        }
+    }
+}
+
+// This function goes through a directory recursively and collects all regular files.
+// The input is a directory path, and it returns a vector of paths to the files found in that directory
+// (and its subdirectories).
+std::vector<std::filesystem::path>
+CustomGrep::collectFiles(const std::filesystem::path& dir)
+{
+    std::vector<std::filesystem::path> files;
+    std::error_code ec;
+
+    // First, check if the path is a directory.
+    if (std::filesystem::is_directory(dir, ec))
+    {
+        collectFilesRecursive(dir, files);
+    }
+    // If not a directory, check if it's a regular file.
+    else if (std::filesystem::is_regular_file(dir, ec))
+    {
+        files.push_back(dir);
+    }
+    // If it's neither, or an error occurred, report it.
+    else
+    {
+        if (ec)
+        {
+            std::cerr << "Error accessing path: [" << dir.string() << "]: " << ec.message() << std::endl;
+        }
+        else if (std::filesystem::exists(dir))
+        {
+            std::cerr << "Input path: [" << dir.string() << "] is not a regular file or a directory." << std::endl;
+        }
+        else
+        {
+            std::cerr << "Input path: [" << dir.string() << "] does not exist." << std::endl;
+        }
+        return {}; // Return empty vector
+    }
+
+    if (!files.empty())
+    {
+        std::cout << files.size() << " files found" << std::endl;
     }
     return files;
 }
@@ -152,7 +211,15 @@ std::vector<Match> CustomGrep::searchInFile(const std::filesystem::path& filePat
     if (!ifs.is_open())
     {
         // Couldn’t open (permissions, etc.); return empty
-        std::cerr << "Could not open file: [" << filePath << "] for searching."  << std::endl;
+        if (errno == EACCES) // EACCES is from <cerrno>
+        {
+            std::cerr << "Permission denied, cannot access file: " << filePath.string() << std::endl;
+        }
+        else
+        {
+            // For other errors, report the system error message.
+            std::cerr << "Could not open file [" << filePath.string() << "]: " << strerror(errno) << std::endl;
+        }
         return results;
     }
     if (m_regexSearch)
