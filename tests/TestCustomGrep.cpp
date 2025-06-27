@@ -558,3 +558,55 @@ TEST(HandlesCarriageReturn, StripsCR)
 
     removeDirIfExists(base);
 }
+
+TEST(CollectFiles, SkipsPermissionDenied)
+{
+    auto base = fs::temp_directory_path() / "custom_grep_perm_denied";
+    removeDirIfExists(base);
+    fs::create_directories(base / "allowed");
+    fs::create_directories(base / "denied");
+
+    writeFile(base / "allowed" / "file1.txt", { "ok" });
+    writeFile(base / "denied" / "secret.txt", { "hidden" });
+
+    fs::permissions(base / "denied", fs::perms::none, fs::perm_options::replace);
+
+    testing::internal::CaptureStderr();
+    auto files = cgrep::CustomGrep::collectFiles(base);
+    std::string output = testing::internal::GetCapturedStderr();
+
+    EXPECT_EQ(files.size(), 1u);
+    EXPECT_EQ(files[0], base / "allowed" / "file1.txt");
+    EXPECT_NE(output.find("Permission denied"), std::string::npos);
+
+    fs::permissions(base / "denied", fs::perms::owner_all,
+                    fs::perm_options::replace);
+    removeDirIfExists(base);
+}
+
+TEST(CollectFiles, ContinuesAfterPermissionDenied)
+{
+    auto base = fs::temp_directory_path() / "custom_grep_perm_continue";
+    removeDirIfExists(base);
+    fs::create_directories(base / "pre");
+    fs::create_directories(base / "denied");
+    fs::create_directories(base / "post");
+
+    writeFile(base / "pre" / "a.txt", { "ok" });
+    writeFile(base / "post" / "b.txt", { "ok" });
+    writeFile(base / "denied" / "secret.txt", { "hidden" });
+
+    fs::permissions(base / "denied", fs::perms::none, fs::perm_options::replace);
+
+    testing::internal::CaptureStderr();
+    auto files = cgrep::CustomGrep::collectFiles(base);
+    std::string output = testing::internal::GetCapturedStderr();
+
+    std::set<fs::path> expected = { base / "pre" / "a.txt", base / "post" / "b.txt" };
+    std::set<fs::path> found(files.begin(), files.end());
+    EXPECT_EQ(found, expected);
+    EXPECT_NE(output.find("Permission denied"), std::string::npos);
+
+    fs::permissions(base / "denied", fs::perms::owner_all, fs::perm_options::replace);
+    removeDirIfExists(base);
+}
