@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <regex>
 #include <iostream>
+#include <system_error>
 
 namespace cgrep
 {
@@ -210,15 +211,15 @@ std::vector<Match> CustomGrep::searchInFile(const std::filesystem::path& filePat
     std::ifstream ifs(filePath);
     if (!ifs.is_open())
     {
-        // Couldn’t open (permissions, etc.); return empty
-        if (errno == EACCES) // EACCES is from <cerrno>
+        std::error_code ec(errno, std::generic_category());
+
+        if (ec == std::errc::permission_denied)
         {
-            std::cerr << "Permission denied, cannot access file: " << filePath.string() << std::endl;
+            std::cerr << "Permission denied, cannot access file: " << filePath.string() << "\n";
         }
         else
         {
-            // For other errors, report the system error message.
-            std::cerr << "Could not open file [" << filePath.string() << "]: " << strerror(errno) << std::endl;
+            std::cerr << "Could not open file [" << filePath.string() << "]: " << ec.message() << "\n";
         }
         return results;
     }
