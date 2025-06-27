@@ -51,7 +51,7 @@ Supports optional case-insensitive or regex matching, and parallelizes work acro
 
 ## Build & Test
 
-> Requires **CMake 3.16+** and a **C++17**-capable compiler.
+> Requires **CMake 3.15+** and a **C++20**-capable compiler.
 
 ### 1. Build (default)
 
